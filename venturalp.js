@@ -79,7 +79,7 @@ jQuery.fn.slideClick = function (obj, spanOver, fade) {
         $(this).click(function () {
             $(obj.divOver).each(function (j) {
                 if (j == index) {
-                    if (spanOver){
+                    if (spanOver) {
                         if (fade)
                             $(this).find("span").fadeOut(300);
                         else
@@ -87,8 +87,8 @@ jQuery.fn.slideClick = function (obj, spanOver, fade) {
                     }
                     $(this).addClass(obj.active);
                 } else {
-                    if (spanOver){
-                        if(fade)
+                    if (spanOver) {
+                        if (fade)
                             $(this).find("span").fadeIn(300);
                         else
                             $(this).find("span").hide();
@@ -103,8 +103,7 @@ jQuery.fn.slideClick = function (obj, spanOver, fade) {
                             $(this).fadeIn(300).css("display", obj.display);
                         else
                             $(this).show().css("display", obj.display);
-                    }
-                    else {
+                    } else {
                         if (fade)
                             $(this).fadeIn(300);
                         else
@@ -117,3 +116,68 @@ jQuery.fn.slideClick = function (obj, spanOver, fade) {
         });
     });
 };
+
+//Verifica se um elemento está interamente visível na viewport
+$.fn.isFullVisible = function () {
+    var elementTop = $(this).offset().top;
+    var elementBottom = elementTop + $(this).outerHeight() + $(this).height();
+
+    var viewportTop = $(window).scrollTop();
+    var viewportBottom = viewportTop + $(window).height() - ($(this).height() < $(window).height() ? $(this).height() : 0);
+
+    return elementBottom > viewportTop && elementTop < viewportBottom;
+};
+
+
+//Plugin para parallax de backgrounds
+$.fn.parallaxBg = function (settings) {
+    var $lastScroll = $(window).scrollTop();
+    var $initScroll = $(window).scrollTop();
+
+    if (settings == undefined)
+        settings = Object;
+
+    //Define se o elemento precisa estar totalmente visível em tela ou não para começar a scrollar
+    if (settings.visible == undefined)
+        settings.visible = false;
+
+    //Define a direção do movimento do BG, quando true imagem sobe
+    if (settings.naturalFlow == undefined)
+        settings.naturalFlow = true;
+
+    //Define a velocidade de movimentação do BG
+    if (settings.speed == undefined)
+        settings.speed = 25;
+
+    var $obj = $(this);
+    var yOri = parseInt($obj.css("background-position-y").replace("px", ""));
+
+    $(window).scroll(function () {
+        //Calcula a posição Y atual do BG
+        var yAux = parseInt($obj.css("background-position-y").replace("px", ""));
+        //Verifica a direção em que a tela está scrollando
+        var direct = 0;
+        if (settings.naturalFlow)
+            direct = ($lastScroll - $(window).scrollTop()) > 0 ? -1 : 1;
+        else
+            direct = ($lastScroll - $(window).scrollTop()) > 0 ? 1 : -1;
+
+
+        var flagMove = false
+        //Aqui é onde a movimentação acontece, para objetos menores é possível seta se quer que ocorra apenas quando totalmente visívels (settings.visible)
+        if (settings.visible) {
+            if ($obj.isFullVisible())
+                flagMove = true;
+        } else {
+            flagMove = true;
+        }
+
+        if (flagMove && (yAux - (direct * settings.speed) <= 0))
+            $obj.css("background-position-y", (yAux - (direct * settings.speed) + "px"));
+
+        $lastScroll = $(window).scrollTop();
+        //Verifica se voltou para a posição inicial e reposiciona
+        if ($lastScroll == $initScroll)
+            $obj.css("background-position-y", yOri + "px");
+    });
+}
